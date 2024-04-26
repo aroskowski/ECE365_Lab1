@@ -1,0 +1,36 @@
+main			;=========== MAIN ==============
+	MOV R0, #16 	;Input (target index)
+	MOV R1, #0 	;Current index
+	BL fib		;start calculation
+
+fib			;================= Fibonacci ======================
+	CMP R1, #1		;current index <= 1 basecase
+	BEQ fib_base_one
+	BLT fib_base_zero	
+
+	B fib_return		;calculate return value (aka fib(n)) 
+
+fib_return	;---------------- Return Value --------------------
+	STMFD SP!, {R2}	;flip R2 and R3 by using the stack 
+	MOV R2, R3 		; as a temporay place holder 
+	LDMFD SP!, {R3}	;R2 prevprev and R3 prev of fibonacci
+	ADD R3, R3, R2		;R3 = fib(n-2) + fib(n-1)
+	B fib_next		;begin calculation of next index.
+
+fib_next 		;----------------- Next Index ---------------------
+	CMP R0, R1		;target match current?
+	BEQ fib_done		;target = current: end calculation
+	
+	ADD R1, R1, #1		;if not done, calc next index 
+	B fib			; and recall the program
+
+fib_base_one	;----------------- Base Cases ---------------------
+	MOV R2, #1		;store value to R2
+	B fib_return
+fib_base_zero			;initialize R2 and R3 to zero
+	MOV R2, #0			;This is not fully required 
+	MOV R3, #0			;but it is the safer option 
+	B fib_return		
+
+fib_done		;================= Program END ====================
+	END			; Calculated value is stored in R3

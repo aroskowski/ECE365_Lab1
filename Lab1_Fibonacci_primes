@@ -1,0 +1,91 @@
+main			;=========== MAIN ==============
+	MOV R0, #7 	;Input (target index)
+	MOV R1, #0 	;Current index
+	MOV R5, #1	;Create 'array'
+	LSL R5, R5, #16 ;set array addressing (0x00010000)
+	B fib		;start calculation
+
+fib			;================= Fibonacci ======================
+	CMP R1, #1		;current index <= 1 basecase
+	BEQ fib_base_one
+	BLT fib_base_zero	
+
+	B fib_return		;calculate return value (aka fib(n)) 
+
+fib_return	;---------------- Return Value --------------------
+	STMFD SP!, {R2}	;flip R2 and R3 by using the stack 
+	MOV R2, R3 		; as a temporay place holder 
+	LDMFD SP!, {R3}	;R2 prevprev and R3 prev of fibonacci
+	ADD R3, R3, R2		;R3 = fib(n-2) + fib(n-1)
+	B value_test		;check value conditions.
+
+fib_next 		;----------------- Next Index ---------------------
+	CMP R0, R6		;target match current count
+	BEQ program_end		;target = current: end calculation
+	
+	ADD R1, R1, #1		;if not done, calc next index 
+	B fib			; and recall the program
+
+fib_base_one	;----------------- Base Cases ---------------------
+	MOV R2, #1		;store value to R2
+	B fib_return
+fib_base_zero			;initialize R2 and R3 to zero
+	MOV R2, #0			;This is not fully required 
+	MOV R3, #0			;but it is the safer option 
+	B fib_return		
+
+value_test	;=============== Value Testing ====================
+	TST R3, #1 		;test 1's place
+	BEQ value_even			;if cleared its even.
+	BNE value_odd			;if set its odd. 
+value_even 			;even numbers cannot be prime
+	CMP R3, #2			;2 is the only exception!!
+	BEQ array_push				;handle exception
+	BNE fib_next			;continue. 
+value_odd 			;odd numbers need to be checked for prime
+	CMP R3, #1			;1 is not prime
+	BEQ fib_next
+	 
+	B prime_calc
+	
+prime_calc	;=============== Check if Prime ===================
+	LSR R11, R3, #1	;divide by two (less to check)
+
+	MOV R9, #3		;set initial iterator of for loop 
+	B prime_for_loop
+
+prime_for_loop
+	CMP R11, R9		; target vs current 
+	BLE array_push		;if (R11 <= R9) end as prime
+
+	MOV R10, R3		;temporary copy of value R3 to divide
+
+prime_sub_loop	;aka division
+	SUBS R10, R10, R9
+	BEQ fib_next 		;ever sutracts to 0, end as not prime
+	BLT prime_for_next	;subtracts to negative, next continue for loop
+	B prime_sub_loop	;else keep subtracting
+
+prime_for_next
+	ADD R9, R9, #2		;add to iterator - only check odd
+	B prime_for_loop
+
+array_push 	;============== push to the 'array' ===============
+	STR R3, [R5], #8	;post increment by 8   
+	ADD R6, R6, #1		;add to current counter
+	B fib_next		;continue 
+	
+array_pop 	;============= pop from the 'array' ===============
+	SUB R5, R5, #8		;Due to the post increment
+	LDR R4, [R5]
+	B pop_loop
+pop_loop 		;======= loop, popping all values from array ======
+	CMP R0, #0
+	BEQ program_end		;For quick output testing 
+	SUB R0, R0, #1				;array is placed backwards 
+	B array_pop				;into R6 
+;to use this function, replace "program_end" on line 24 with "pop_loop"
+	
+program_end	;================= Program END ====================
+	END			; Calculated value is stored in R3
+	

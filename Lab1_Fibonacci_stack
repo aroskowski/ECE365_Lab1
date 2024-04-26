@@ -1,0 +1,19 @@
+main
+	MOV R0, #01 ;input to R0 
+	BL fib_calc 
+	END
+
+fib_calc ;main calculation of the fibonaaci value
+	STMDB SP!, {R4, R5, R6, LR} 	;stores 4 registers to the stack
+	CMP R0, #2				;check working value (R0) less than 2
+	BLE fib_end				;true - branch to fib_end
+	MOV R4, R0				;store working to R4 
+	SUB R0, R4, #2				;update working to (call - 2)
+	BL fib_calc				;recalculate
+	MOV R5, R0				;store working to R5 
+	SUB R0, R4, #1				;update working to (call - 1)
+	BL fib_calc				;recalculate
+	ADD R0, R0, R5				;
+	
+fib_end
+	LDMIA SP!, {R4, R5, R6, PC}
